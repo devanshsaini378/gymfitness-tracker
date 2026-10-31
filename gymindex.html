@@ -1,0 +1,2046 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iron Daily — Gym Workout Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+    <style>
+        :root {
+            --accent: #e8f55a;
+            --accent-dim: #d4e040;
+            --bg: #080808;
+            --surface: #111111;
+            --surface2: #161616;
+            --border: #222222;
+            --border2: #2a2a2a;
+            --text: #f0ede8;
+            --text2: #888880;
+            --text3: #444440;
+            --green-bg: #0e110a;
+            --green-border: #2a3a07;
+            --green-text: #90b818;
+            --amber-bg: #120e04;
+            --amber-border: #3a2a07;
+            --amber-text: #c88a20;
+            --danger: #e24b4a;
+            --radius: 10px;
+            --radius-sm: 7px;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overscroll-behavior: none;
+        }
+
+        /* ── Layout ── */
+        .app {
+            max-width: 680px;
+            margin: 0 auto;
+            padding-bottom: 76px;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* ── Header ── */
+        .header {
+            padding: 22px 20px 14px;
+            border-bottom: 0.5px solid var(--border);
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            background: var(--bg);
+            z-index: 10;
+        }
+
+        .logo-wrap {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+
+        .logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 30px;
+            letter-spacing: 2.5px;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .sync-badge {
+            font-size: 10px;
+            padding: 2px 7px;
+            border-radius: 10px;
+            background: var(--surface2);
+            color: var(--text3);
+            border: 0.5px solid var(--border2);
+            font-family: 'DM Sans', sans-serif;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .sync-badge.online {
+            color: var(--green-text);
+            border-color: var(--green-border);
+            background: var(--green-bg);
+        }
+
+        .sync-badge.offline {
+            color: var(--amber-text);
+            border-color: var(--amber-border);
+            background: var(--amber-bg);
+        }
+
+        .sub {
+            font-size: 11px;
+            color: var(--text3);
+            margin-top: 3px;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .day-pill {
+            background: var(--surface);
+            border: 0.5px solid var(--border2);
+            border-radius: var(--radius-sm);
+            padding: 8px 14px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color .15s;
+        }
+
+        .day-pill:hover {
+            border-color: var(--accent);
+        }
+
+        .day-pill .n {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 26px;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .day-pill .l {
+            font-size: 9px;
+            color: var(--text3);
+            letter-spacing: 1.5px;
+        }
+
+        /* ── Progress ── */
+        .prog-wrap {
+            padding: 14px 20px;
+        }
+
+        .prog-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text3);
+            margin-bottom: 7px;
+        }
+
+        .prog-track {
+            height: 5px;
+            background: var(--surface2);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .prog-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 3px;
+            transition: width 0.5s cubic-bezier(.4, 0, .2, 1);
+        }
+
+        /* ── Section label ── */
+        .slabel {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--text3);
+            padding: 0 20px;
+            margin: 4px 0 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .slabel-action {
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            background: none;
+            border: none;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .slabel-action:hover {
+            text-decoration: underline;
+        }
+
+        /* ── Exercise card ── */
+        .ex-card {
+            margin: 0 16px 10px;
+            background: var(--surface);
+            border: 0.5px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: border-color 0.25s;
+        }
+
+        .ex-card.done {
+            border-color: var(--green-border);
+            background: var(--green-bg);
+        }
+
+        .ex-card.open {
+            border-color: #333;
+        }
+
+        .ex-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 14px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .ex-thumb {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--radius-sm);
+            background: var(--surface2);
+            border: 0.5px solid var(--border2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .thumb-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(232, 245, 90, .12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity .2s;
+        }
+
+        .ex-card:not(.done) .ex-header:hover .thumb-overlay {
+            opacity: 1;
+        }
+
+        .thumb-overlay i {
+            color: var(--accent);
+            font-size: 18px;
+            margin-left: 2px;
+        }
+
+        .ex-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .ex-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ex-meta {
+            font-size: 12px;
+            color: var(--text3);
+            margin-top: 2px;
+        }
+
+        .ex-meta b {
+            color: var(--text2);
+            font-weight: 500;
+        }
+
+        .badges {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .badge-custom {
+            background: var(--amber-bg);
+            border: 0.5px solid var(--amber-border);
+            border-radius: 5px;
+            padding: 3px 7px;
+            font-size: 10px;
+            color: var(--amber-text);
+            letter-spacing: .5px;
+        }
+
+        .badge-done {
+            background: var(--green-bg);
+            border: 0.5px solid var(--green-border);
+            border-radius: 5px;
+            padding: 3px 8px;
+            font-size: 10px;
+            color: var(--green-text);
+        }
+
+        .chevron {
+            color: var(--text3);
+            font-size: 15px;
+            transition: transform .22s;
+            flex-shrink: 0;
+        }
+
+        .ex-card.open .chevron {
+            transform: rotate(180deg);
+        }
+
+        /* ── Card body ── */
+        .ex-body {
+            border-top: 0.5px solid var(--border);
+            padding: 0 14px 14px;
+            display: none;
+        }
+
+        .ex-card.open .ex-body {
+            display: block;
+        }
+
+        .muscle-row {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin: 12px 0 6px;
+        }
+
+        .mtag {
+            background: var(--surface2);
+            border: 0.5px solid var(--border2);
+            border-radius: 20px;
+            padding: 3px 9px;
+            font-size: 11px;
+            color: var(--text3);
+        }
+
+        /* ── Video ── */
+        .video-wrap {
+            margin: 10px 0;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            background: var(--bg);
+            aspect-ratio: 16/9;
+            border: 0.5px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            cursor: pointer;
+            transition: background .2s;
+        }
+
+        .video-wrap:hover {
+            background: #101010;
+        }
+
+        .video-wrap iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+
+        .vplay {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            transition: transform .15s;
+        }
+
+        .vplay:hover {
+            transform: scale(1.1);
+        }
+
+        .vplay i {
+            color: #080808;
+            font-size: 18px;
+            margin-left: 3px;
+        }
+
+        .vlabel {
+            font-size: 12px;
+            color: var(--text3);
+        }
+
+        .no-video {
+            background: var(--surface2);
+            border: 0.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text3);
+            margin: 10px 0;
+        }
+
+        .no-video i {
+            font-size: 22px;
+            display: block;
+            margin-bottom: 6px;
+            color: var(--border2);
+        }
+
+        /* ── Tip ── */
+        .tip {
+            font-size: 12px;
+            color: var(--text3);
+            margin-bottom: 12px;
+            padding: 0 2px;
+            line-height: 1.5;
+        }
+
+        .tip::before {
+            content: '💡 ';
+        }
+
+        /* ── Sets grid ── */
+        .sets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+            gap: 7px;
+            margin: 10px 0;
+        }
+
+        .set-row {
+            background: var(--surface2);
+            border: 0.5px solid var(--border2);
+            border-radius: var(--radius-sm);
+            padding: 9px 10px;
+        }
+
+        .set-row.sdone {
+            background: var(--green-bg);
+            border-color: var(--green-border);
+        }
+
+        .set-lbl {
+            font-size: 9px;
+            letter-spacing: 1px;
+            color: var(--text3);
+            margin-bottom: 6px;
+        }
+
+        .set-inputs {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .set-inp {
+            background: var(--bg);
+            border: 0.5px solid var(--border2);
+            border-radius: 5px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            width: 46px;
+            padding: 4px 5px;
+            text-align: center;
+            transition: border-color .15s;
+        }
+
+        .set-inp:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .set-inp:disabled {
+            color: var(--green-border);
+            border-color: #1a280a;
+        }
+
+        .set-sep {
+            font-size: 10px;
+            color: var(--border2);
+        }
+
+        .set-chk {
+            width: 26px;
+            height: 26px;
+            border-radius: 5px;
+            border: 0.5px solid var(--border2);
+            background: var(--bg);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .15s;
+            flex-shrink: 0;
+        }
+
+        .set-chk:hover {
+            border-color: var(--accent);
+        }
+
+        .set-chk.ck {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .set-chk.ck i {
+            color: #080808;
+        }
+
+        .set-chk i {
+            color: var(--border2);
+            font-size: 13px;
+        }
+
+        /* ── Card actions ── */
+        .card-actions {
+            display: flex;
+            gap: 7px;
+            margin-top: 12px;
+        }
+
+        .btn-done {
+            flex: 1;
+            padding: 10px;
+            border-radius: var(--radius-sm);
+            background: var(--accent);
+            border: none;
+            color: #080808;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background .15s, transform .1s;
+        }
+
+        .btn-done:hover {
+            background: var(--accent-dim);
+        }
+
+        .btn-done:active {
+            transform: scale(.98);
+        }
+
+        .btn-done:disabled {
+            background: var(--green-bg);
+            color: var(--green-border);
+            cursor: default;
+            transform: none;
+        }
+
+        .btn-ico {
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            background: transparent;
+            border: 0.5px solid var(--border2);
+            color: var(--text3);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all .15s;
+        }
+
+        .btn-ico:hover {
+            border-color: #444;
+            color: var(--text2);
+        }
+
+        .btn-ico.red:hover {
+            border-color: #5a1a1a;
+            color: var(--danger);
+        }
+
+        .notes-ta {
+            margin-top: 8px;
+            width: 100%;
+            background: var(--bg);
+            border: 0.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text2);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            padding: 9px 11px;
+            resize: none;
+            height: 66px;
+            transition: border-color .15s;
+        }
+
+        .notes-ta:focus {
+            outline: none;
+            border-color: #333;
+        }
+
+        /* ── Add btn ── */
+        .add-btn {
+            margin: 4px 16px 14px;
+            padding: 11px 16px;
+            background: transparent;
+            border: 0.5px dashed var(--border2);
+            border-radius: var(--radius);
+            color: var(--text3);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            cursor: pointer;
+            width: calc(100% - 32px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            transition: all .2s;
+        }
+
+        .add-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* ── Rest screen ── */
+        .rest-screen {
+            padding: 50px 20px;
+            text-align: center;
+        }
+
+        .rest-icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+        }
+
+        .rest-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 34px;
+            color: var(--accent);
+        }
+
+        .rest-msg {
+            color: var(--text3);
+            font-size: 13px;
+            margin-top: 8px;
+            line-height: 1.6;
+        }
+
+        /* ── Stats ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 9px;
+            padding: 14px 16px;
+        }
+
+        .stat-c {
+            background: var(--surface);
+            border: 0.5px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+        }
+
+        .stat-n {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 34px;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .stat-l {
+            font-size: 11px;
+            color: var(--text3);
+            margin-top: 3px;
+        }
+
+        /* ── Streak ── */
+        .streak-wrap {
+            padding: 0 16px 14px;
+        }
+
+        .streak-row {
+            display: flex;
+            gap: 5px;
+        }
+
+        .s-day {
+            flex: 1;
+            aspect-ratio: 1;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .s-day.hit {
+            background: var(--accent);
+            color: #080808;
+        }
+
+        .s-day.now {
+            background: var(--green-bg);
+            border: 0.5px solid var(--green-border);
+            color: var(--green-text);
+        }
+
+        .s-day.off {
+            background: var(--surface2);
+            color: var(--text3);
+        }
+
+        /* ── History ── */
+        .hist-item {
+            margin: 0 16px 9px;
+            padding: 13px 14px;
+            background: var(--surface);
+            border: 0.5px solid var(--border);
+            border-radius: var(--radius);
+        }
+
+        .hist-date {
+            font-size: 10px;
+            color: var(--text3);
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .hist-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text2);
+        }
+
+        .hist-meta {
+            font-size: 11px;
+            color: var(--text3);
+            margin-top: 2px;
+        }
+
+        .empty {
+            padding: 30px 20px;
+            text-align: center;
+            color: var(--text3);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .empty i {
+            font-size: 28px;
+            display: block;
+            margin-bottom: 8px;
+            color: var(--border2);
+        }
+
+        /* ── Schedule ── */
+        .sched-item {
+            margin: 0 16px 9px;
+            padding: 13px 14px;
+            background: var(--surface);
+            border: 0.5px solid var(--border);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: border-color .15s;
+        }
+
+        .sched-item:hover {
+            border-color: #444;
+        }
+
+        .sched-item.today {
+            background: #111a06;
+            border-color: #3a5a10;
+        }
+
+        .sched-day-n {
+            font-size: 10px;
+            letter-spacing: 1px;
+            color: var(--text3);
+            margin-bottom: 3px;
+        }
+
+        .sched-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .sched-count {
+            font-size: 11px;
+            color: var(--text3);
+            margin-top: 2px;
+        }
+
+        .today-pill {
+            font-size: 10px;
+            background: var(--green-bg);
+            border: 0.5px solid var(--green-border);
+            padding: 3px 9px;
+            border-radius: 20px;
+            color: var(--green-text);
+        }
+
+        /* ── My Exercises ── */
+        .lib-item {
+            margin: 0 16px 9px;
+            background: var(--surface);
+            border: 0.5px solid var(--border);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+        }
+
+        .lib-emoji {
+            font-size: 22px;
+            width: 38px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .lib-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .lib-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .lib-meta {
+            font-size: 11px;
+            color: var(--text3);
+            margin-top: 2px;
+        }
+
+        .lib-actions {
+            display: flex;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+
+        .lib-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: 0.5px solid var(--border2);
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text3);
+            transition: all .15s;
+        }
+
+        .lib-btn:hover {
+            border-color: #444;
+            color: var(--text2);
+        }
+
+        .lib-btn.red:hover {
+            border-color: #5a1a1a;
+            color: var(--danger);
+        }
+
+        .lib-btn:disabled {
+            opacity: 0.35;
+            cursor: default;
+        }
+
+        .lib-btn i {
+            font-size: 15px;
+        }
+
+        /* ── Nav ── */
+        .nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 680px;
+            background: rgba(8, 8, 8, .97);
+            border-top: 0.5px solid var(--border);
+            display: flex;
+            padding: 10px 0 14px;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+        }
+
+        .nav-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+            padding: 5px 0;
+            color: var(--text3);
+            font-size: 9px;
+            letter-spacing: .8px;
+            transition: color .15s;
+            border: none;
+            background: none;
+        }
+
+        .nav-btn.active {
+            color: var(--accent);
+        }
+
+        .nav-btn i {
+            font-size: 21px;
+        }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            background: rgba(0, 0, 0, .8);
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 16px;
+            min-height: 600px;
+        }
+
+        .modal {
+            background: var(--surface);
+            border: 0.5px solid var(--border2);
+            border-radius: 14px;
+            width: 100%;
+            max-width: 560px;
+            padding: 22px;
+            margin-top: 10px;
+        }
+
+        .modal-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 22px;
+            color: var(--accent);
+            letter-spacing: 1px;
+            margin-bottom: 18px;
+        }
+
+        .f-row {
+            margin-bottom: 13px;
+        }
+
+        .f-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 13px;
+        }
+
+        .f-label {
+            font-size: 10px;
+            letter-spacing: 1.2px;
+            color: var(--text3);
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .f-inp {
+            width: 100%;
+            background: var(--bg);
+            border: 0.5px solid var(--border2);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            padding: 9px 11px;
+            transition: border-color .15s;
+        }
+
+        .f-inp:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .f-inp.err {
+            border-color: var(--danger);
+        }
+
+        .f-sel {
+            width: 100%;
+            background: var(--bg);
+            border: 0.5px solid var(--border2);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            padding: 9px 11px;
+            cursor: pointer;
+        }
+
+        .f-sel:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .f-hint {
+            font-size: 10px;
+            color: var(--text3);
+            margin-top: 4px;
+        }
+
+        .emoji-grid {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+
+        .e-opt {
+            width: 34px;
+            height: 34px;
+            border-radius: 7px;
+            border: 0.5px solid var(--border);
+            background: var(--surface2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            cursor: pointer;
+            transition: all .15s;
+        }
+
+        .e-opt:hover {
+            border-color: #555;
+        }
+
+        .e-opt.sel {
+            border-color: var(--accent);
+            background: var(--green-bg);
+        }
+
+        .muscle-chips {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+
+        .m-chip {
+            background: var(--surface2);
+            border: 0.5px solid var(--border);
+            border-radius: 20px;
+            padding: 4px 11px;
+            font-size: 11px;
+            color: var(--text3);
+            cursor: pointer;
+            transition: all .15s;
+        }
+
+        .m-chip.sel {
+            background: var(--green-bg);
+            border-color: var(--green-border);
+            color: var(--green-text);
+        }
+
+        .modal-btns {
+            display: flex;
+            gap: 8px;
+            margin-top: 18px;
+        }
+
+        .btn-save {
+            flex: 1;
+            padding: 11px;
+            border-radius: var(--radius-sm);
+            background: var(--accent);
+            border: none;
+            color: #080808;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background .15s;
+        }
+
+        .btn-save:hover {
+            background: var(--accent-dim);
+        }
+
+        .btn-cancel {
+            padding: 11px 18px;
+            border-radius: var(--radius-sm);
+            background: transparent;
+            border: 0.5px solid var(--border2);
+            color: var(--text3);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all .15s;
+        }
+
+        .btn-cancel:hover {
+            border-color: #444;
+            color: var(--text2);
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app">
+
+        <!-- TODAY -->
+        <div class="screen active" id="scr-today">
+            <div class="header">
+                <div>
+                    <div class="logo-wrap">
+                        <div class="logo">IRON DAILY</div>
+                        <span id="sync-status" class="sync-badge">Connecting...</span>
+                    </div>
+                    <div class="sub" id="date-lbl"></div>
+                </div>
+                <div class="header-actions">
+                    <div class="day-pill" onclick="cycleDay()" title="Click to advance to next day">
+                        <div class="n" id="day-n">1</div>
+                        <div class="l">DAY</div>
+                    </div>
+                </div>
+            </div>
+            <div class="prog-wrap">
+                <div class="prog-labels"><span>Today's workout</span><span id="prog-lbl">0 / 0 done</span></div>
+                <div class="prog-track">
+                    <div class="prog-fill" id="prog-fill" style="width:0%"></div>
+                </div>
+            </div>
+            <div class="slabel">
+                <span id="wk-label">WORKOUT</span>
+                <button class="slabel-action" onclick="resetTodayWorkout()">↺ Reset Today</button>
+            </div>
+            <div id="ex-container"></div>
+            <button class="add-btn" onclick="openModal()">
+                <i class="ti ti-plus" aria-hidden="true"></i> Add custom exercise to today
+            </button>
+        </div>
+
+        <!-- PROGRESS -->
+        <div class="screen" id="scr-history">
+            <div class="header">
+                <div>
+                    <div class="logo">PROGRESS</div>
+                    <div class="sub">YOUR JOURNEY</div>
+                </div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-c">
+                    <div class="stat-n" id="st-total">0</div>
+                    <div class="stat-l">Exercises done today</div>
+                </div>
+                <div class="stat-c">
+                    <div class="stat-n" id="st-streak">0</div>
+                    <div class="stat-l">Day streak 🔥</div>
+                </div>
+                <div class="stat-c">
+                    <div class="stat-n" id="st-sets">0</div>
+                    <div class="stat-l">Total sets logged</div>
+                </div>
+                <div class="stat-c">
+                    <div class="stat-n" id="st-custom">0</div>
+                    <div class="stat-l">Custom exercises</div>
+                </div>
+            </div>
+            <div class="slabel" style="margin-top:4px">THIS WEEK</div>
+            <div class="streak-wrap">
+                <div class="streak-row" id="streak-row"></div>
+            </div>
+            <div class="slabel">RECENT ACTIVITY</div>
+            <div id="hist-list"></div>
+        </div>
+
+        <!-- SCHEDULE -->
+        <div class="screen" id="scr-schedule">
+            <div class="header">
+                <div>
+                    <div class="logo">SCHEDULE</div>
+                    <div class="sub">7-DAY PROGRAM</div>
+                </div>
+            </div>
+            <div id="sched-list" style="padding:12px 0"></div>
+        </div>
+
+        <!-- MY EXERCISES -->
+        <div class="screen" id="scr-library">
+            <div class="header">
+                <div>
+                    <div class="logo">MY EXERCISES</div>
+                    <div class="sub">CUSTOM LIBRARY</div>
+                </div>
+            </div>
+            <div style="padding:14px 16px 0">
+                <button class="btn-save"
+                    style="width:100%;display:flex;align-items:center;justify-content:center;gap:7px"
+                    onclick="openModal()">
+                    <i class="ti ti-plus" aria-hidden="true"></i> Create new exercise
+                </button>
+            </div>
+            <div id="lib-list" style="padding:12px 0"></div>
+        </div>
+
+    </div>
+
+    <!-- Bottom nav -->
+    <nav class="nav">
+        <button class="nav-btn active" onclick="goTo('today',this)" aria-label="Today">
+            <i class="ti ti-bolt" aria-hidden="true"></i>TODAY
+        </button>
+        <button class="nav-btn" onclick="goTo('history',this)" aria-label="Progress">
+            <i class="ti ti-chart-bar" aria-hidden="true"></i>PROGRESS
+        </button>
+        <button class="nav-btn" onclick="goTo('schedule',this)" aria-label="Schedule">
+            <i class="ti ti-calendar" aria-hidden="true"></i>SCHEDULE
+        </button>
+        <button class="nav-btn" onclick="goTo('library',this)" aria-label="My Exercises">
+            <i class="ti ti-pencil-plus" aria-hidden="true"></i>MY EXERCISES
+        </button>
+    </nav>
+
+    <!-- Modal (normal flow, toggled) -->
+    <div id="modal-wrap" style="display:none">
+        <div class="modal-overlay">
+            <div class="modal">
+                <div class="modal-title">ADD CUSTOM EXERCISE</div>
+
+                <div class="f-row">
+                    <label class="f-label">EXERCISE NAME *</label>
+                    <input class="f-inp" id="f-name" type="text" placeholder="e.g. Bulgarian Split Squat"
+                        maxlength="60">
+                </div>
+                <div class="f-2">
+                    <div>
+                        <label class="f-label">SETS *</label>
+                        <input class="f-inp" id="f-sets" type="number" min="1" max="20" value="3">
+                    </div>
+                    <div>
+                        <label class="f-label">REPS *</label>
+                        <input class="f-inp" id="f-reps" type="number" min="1" max="500" value="12">
+                    </div>
+                </div>
+                <div class="f-row">
+                    <label class="f-label">ICON</label>
+                    <div class="emoji-grid" id="emoji-grid"></div>
+                </div>
+                <div class="f-row">
+                    <label class="f-label">MUSCLE GROUPS</label>
+                    <div class="muscle-chips" id="muscle-chips"></div>
+                </div>
+                <div class="f-row">
+                    <label class="f-label">YOUTUBE VIDEO ID <span style="color:#333">(optional)</span></label>
+                    <input class="f-inp" id="f-vid" type="text" placeholder="e.g. SCVCLChPQMs">
+                    <div class="f-hint">The part after youtube.com/watch?v= in the URL</div>
+                </div>
+                <div class="f-row">
+                    <label class="f-label">COACHING CUE <span style="color:#333">(optional)</span></label>
+                    <input class="f-inp" id="f-tip" type="text"
+                        placeholder="e.g. Keep chest tall, knee tracks over toes" maxlength="120">
+                </div>
+                <div class="f-row">
+                    <label class="f-label">ADD TO TODAY</label>
+                    <select class="f-sel" id="f-today">
+                        <option value="yes">Yes — add to today's workout</option>
+                        <option value="no">No — save to library only</option>
+                    </select>
+                </div>
+                <div class="modal-btns">
+                    <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+                    <button class="btn-save" onclick="saveCustom()">Save Exercise</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = ''; // Relative path to backend server
+        const EMOJIS = ['🏋️', '💪', '🦵', '🔄', '⬆️', '⬇️', '🎯', '🧘', '📦', '🌊', '🤸', '🏃', '⚡', '🔥', '🛡️', '🥊', '🏊', '🤼'];
+        const MUSCLE_OPTS = ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Quads', 'Hamstrings', 'Glutes', 'Core', 'Calves', 'Traps', 'Forearms', 'Cardio', 'Full Body'];
+
+        // Fallback default program in case network is disconnected
+        let PROGRAM = [
+            {
+                name: 'Push Day — Chest & Shoulders',
+                exercises: [
+                    { id: 'e1', name: 'Barbell Bench Press', sets: 4, reps: 10, muscle: ['Chest', 'Triceps', 'Anterior Deltoid'], emoji: '🏋️', vid: 'SCVCLChPQMs', tip: 'Keep shoulder blades retracted and feet flat on the floor throughout.' },
+                    { id: 'e2', name: 'Overhead Press', sets: 3, reps: 10, muscle: ['Shoulders', 'Triceps'], emoji: '💪', vid: '2yjwXTZQDDI', tip: 'Brace your core hard to avoid lower-back arch.' },
+                    { id: 'e3', name: 'Incline Dumbbell Press', sets: 3, reps: 12, muscle: ['Upper Chest', 'Shoulders'], emoji: '🏋️', vid: '8iPEnn-ltC8', tip: 'Set bench to 30–45° for optimal upper chest activation.' },
+                    { id: 'e4', name: 'Cable Lateral Raises', sets: 3, reps: 15, muscle: ['Side Deltoid'], emoji: '🔄', vid: 'PPzMPPGhzPI', tip: 'Lead with your elbow, not your wrist, to isolate the lateral head.' },
+                    { id: 'e5', name: 'Tricep Rope Pushdown', sets: 3, reps: 15, muscle: ['Triceps'], emoji: '⬇️', vid: 'vB5OHsJ3EME', tip: 'Keep elbows pinned to your sides throughout the movement.' },
+                ]
+            },
+            {
+                name: 'Pull Day — Back & Biceps',
+                exercises: [
+                    { id: 'f1', name: 'Pull-Ups / Lat Pulldown', sets: 4, reps: 8, muscle: ['Lats', 'Biceps'], emoji: '⬆️', vid: 'eGo4IYlbE5g', tip: 'Think "elbows to pockets" — pull down and back.' },
+                    { id: 'f2', name: 'Bent-Over Barbell Row', sets: 4, reps: 10, muscle: ['Mid Back', 'Rhomboids'], emoji: '🏋️', vid: 'FWJR5Ve8bnQ', tip: 'Chest up, hinge at hips to 45°, no rounding.' },
+                    { id: 'f3', name: 'Seated Cable Row', sets: 3, reps: 12, muscle: ['Back', 'Biceps'], emoji: '🔄', vid: 'GZbfZ033f74', tip: 'Squeeze shoulder blades together at full contraction.' },
+                    { id: 'f4', name: 'Dumbbell Bicep Curl', sets: 3, reps: 12, muscle: ['Biceps'], emoji: '💪', vid: 'ykJmrZ5v0Oo', tip: 'Supinate the wrist at the top for full bicep contraction.' },
+                    { id: 'f5', name: 'Face Pulls', sets: 3, reps: 15, muscle: ['Rear Deltoid', 'Traps'], emoji: '🎯', vid: 'rep-qVOkqgk', tip: 'Pull to face level and externally rotate at the top.' },
+                ]
+            },
+            {
+                name: 'Leg Day — Quads, Hams & Glutes',
+                exercises: [
+                    { id: 'g1', name: 'Barbell Back Squat', sets: 4, reps: 8, muscle: ['Quads', 'Glutes', 'Core'], emoji: '🦵', vid: 'ultWZbUMPL8', tip: 'Break parallel for full glute activation.' },
+                    { id: 'g2', name: 'Romanian Deadlift', sets: 3, reps: 10, muscle: ['Hamstrings', 'Glutes'], emoji: '🏋️', vid: 'jEy_czb3RKA', tip: 'Hinge at hips and feel the stretch before driving up.' },
+                    { id: 'g3', name: 'Leg Press', sets: 3, reps: 12, muscle: ['Quads', 'Glutes'], emoji: '🦵', vid: 'IZxyjW7MPJQ', tip: 'High foot placement hits glutes more; low hits quads.' },
+                    { id: 'g4', name: 'Seated Leg Curl', sets: 3, reps: 12, muscle: ['Hamstrings'], emoji: '🔄', vid: 'ELOCsoDSmrg', tip: 'Point toes slightly for extra hamstring engagement.' },
+                    { id: 'g5', name: 'Standing Calf Raise', sets: 4, reps: 20, muscle: ['Calves'], emoji: '⬆️', vid: 'c5Kv6-fnTj8', tip: 'Full range — deep stretch at bottom, hard pause at top.' },
+                ]
+            },
+            { name: 'Active Recovery', rest: true, exercises: [] },
+            {
+                name: 'Upper Body — Strength Focus',
+                exercises: [
+                    { id: 'h1', name: 'Conventional Deadlift', sets: 4, reps: 5, muscle: ['Full Back', 'Glutes', 'Hamstrings'], emoji: '🏋️', vid: 'op9kVnSso6Q', tip: 'Bar over mid-foot, neutral spine — drive the floor away.' },
+                    { id: 'h2', name: 'Weighted Dips', sets: 3, reps: 10, muscle: ['Chest', 'Triceps', 'Shoulders'], emoji: '⬇️', vid: '2z8JmcrW-As', tip: 'Lean forward slightly to shift emphasis onto the chest.' },
+                    { id: 'h3', name: 'T-Bar Row', sets: 3, reps: 10, muscle: ['Mid Back', 'Biceps'], emoji: '🔄', vid: 'j3pY1gesOws', tip: 'Slow controlled eccentric on the way down.' },
+                    { id: 'h4', name: 'Dumbbell Shoulder Press', sets: 3, reps: 12, muscle: ['Shoulders', 'Triceps'], emoji: '💪', vid: 'qEwKCR5JCog', tip: 'Full ROM — elbows below shoulder at bottom, near-lock at top.' },
+                    { id: 'h5', name: 'Hammer Curl', sets: 3, reps: 12, muscle: ['Brachialis', 'Biceps'], emoji: '💪', vid: 'TwD-YGVP4Bk', tip: 'Neutral grip throughout for brachialis activation.' },
+                ]
+            },
+            {
+                name: 'Core & Conditioning',
+                exercises: [
+                    { id: 'i1', name: 'Plank Hold', sets: 3, reps: 60, muscle: ['Core', 'Shoulders'], emoji: '🧘', vid: 'ASdvN_XEl_c', tip: '"Hollow body" — squeeze glutes, don\'t let hips sag.' },
+                    { id: 'i2', name: 'Cable Crunch', sets: 3, reps: 15, muscle: ['Abs'], emoji: '🔄', vid: 'nzPSMUMlAso', tip: 'Crunch toward your hips, not toward the floor.' },
+                    { id: 'i3', name: 'Hanging Leg Raise', sets: 3, reps: 12, muscle: ['Lower Abs', 'Hip Flexors'], emoji: '⬆️', vid: 'Pr1ieGZ5ATc', tip: 'Control the descent — prevent swinging with your core.' },
+                    { id: 'i4', name: 'Battle Ropes', sets: 3, reps: 30, muscle: ['Shoulders', 'Core', 'Cardio'], emoji: '🌊', vid: '5ql8wHZS9aA', tip: 'Alternate waves, knees soft, core braced throughout.' },
+                    { id: 'i5', name: 'Box Jumps', sets: 3, reps: 10, muscle: ['Legs', 'Power'], emoji: '📦', vid: 'hxldG9BNaOQ', tip: 'Land softly with bent knees to protect your joints.' },
+                ]
+            },
+            { name: 'Rest Day', rest: true, exercises: [] },
+        ];
+
+        // ── State ──────────────────────────────────────────────────────────────
+        let S = (() => {
+            try { return JSON.parse(localStorage.getItem('ironDailyFinal') || 'null'); } catch (e) { return null; }
+        })() || { day: 0, sets: {}, done: {}, history: [], totalSets: 0, customs: [], todayCustoms: [], reps: {}, notes: {} };
+
+        let todayPlan = PROGRAM[S.day % 7] || PROGRAM[0];
+
+        function setSyncStatus(online, msg) {
+            const el = document.getElementById('sync-status');
+            if (!el) return;
+            if (online) {
+                el.className = 'sync-badge online';
+                el.innerHTML = '<i class="ti ti-check" aria-hidden="true"></i>' + (msg || 'Synced');
+            } else {
+                el.className = 'sync-badge offline';
+                el.innerHTML = '<i class="ti ti-wifi-off" aria-hidden="true"></i>' + (msg || 'Offline');
+            }
+        }
+
+        function saveLocal() {
+            try { localStorage.setItem('ironDailyFinal', JSON.stringify(S)); } catch (e) { }
+        }
+
+        function todayExercises() {
+            const base = (todayPlan && todayPlan.exercises) ? todayPlan.exercises : [];
+            const custom = (S.todayCustoms || []).map(id => (S.customs || []).find(e => e.id === id)).filter(Boolean);
+            return [...base, ...custom];
+        }
+
+        // ── Backend Sync ───────────────────────────────────────────────────────
+        async function fetchInitialData() {
+            try {
+                // Fetch full program
+                const progRes = await fetch(`${API_BASE}/api/program`);
+                if (progRes.ok) {
+                    const progData = await progRes.json();
+                    if (progData.success && progData.program) {
+                        PROGRAM = progData.program;
+                    }
+                }
+
+                // Fetch server state
+                const stateRes = await fetch(`${API_BASE}/api/state`);
+                if (stateRes.ok) {
+                    const data = await stateRes.json();
+                    if (data.success && data.state) {
+                        const st = data.state;
+                        S.day = st.day;
+                        S.sets = st.sets || {};
+                        S.reps = st.reps || {};
+                        S.done = st.done || {};
+                        S.notes = st.notes || {};
+                        S.totalSets = st.totalSets || 0;
+                        S.customs = st.customs || [];
+                        S.todayCustoms = st.todayCustoms || [];
+                        todayPlan = st.todayPlan || PROGRAM[st.dayIdx || 0];
+
+                        saveLocal();
+                        setSyncStatus(true, 'Live Connected');
+                    }
+                } else {
+                    setSyncStatus(false, 'Local Mode');
+                }
+            } catch (err) {
+                console.warn('Backend offline or not reachable, using local storage state:', err);
+                setSyncStatus(false, 'Local Mode');
+            }
+
+            renderHeader();
+            renderExercises();
+            updateProg();
+        }
+
+        function renderHeader() {
+            document.getElementById('date-lbl').textContent =
+                new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
+            document.getElementById('day-n').textContent = (S.day || 0) + 1;
+            document.getElementById('wk-label').textContent = (todayPlan && todayPlan.name ? todayPlan.name : 'WORKOUT').toUpperCase();
+        }
+
+        // Advance / cycle to next workout day
+        async function cycleDay() {
+            const nextDay = (S.day || 0) + 1;
+            S.day = nextDay;
+            todayPlan = PROGRAM[nextDay % 7];
+            saveLocal();
+            renderHeader();
+            renderExercises();
+            updateProg();
+
+            try {
+                await fetch(`${API_BASE}/api/state/day`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ day: nextDay })
+                });
+                setSyncStatus(true, 'Day Updated');
+            } catch (e) {
+                console.warn('Could not sync day change to server', e);
+            }
+        }
+
+        // Reset today's workout
+        async function resetTodayWorkout() {
+            if (!confirm("Are you sure you want to reset today's workout progress?")) return;
+            S.done = {};
+            S.sets = {};
+            S.todayCustoms = [];
+            saveLocal();
+            renderExercises();
+            updateProg();
+
+            try {
+                await fetch(`${API_BASE}/api/state/reset-today`, { method: 'POST' });
+                setSyncStatus(true, 'Reset Done');
+            } catch (e) {
+                console.warn('Could not sync reset to server', e);
+            }
+        }
+
+        // ── Navigation ────────────────────────────────────────────────────────
+        function goTo(id, btn) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('scr-' + id).classList.add('active');
+            btn.classList.add('active');
+            if (id === 'history') renderHistory();
+            if (id === 'schedule') renderSchedule();
+            if (id === 'library') renderLibrary();
+            window.scrollTo(0, 0);
+        }
+
+        // ── Progress bar ──────────────────────────────────────────────────────
+        function updateProg() {
+            const exs = todayExercises();
+            const total = exs.length;
+            const done = exs.filter(e => S.done[e.id]).length;
+            const pct = total ? Math.round(done / total * 100) : 0;
+            document.getElementById('prog-fill').style.width = pct + '%';
+            document.getElementById('prog-lbl').textContent = done + ' / ' + total + ' done';
+        }
+
+        // ── Toggle card expand ────────────────────────────────────────────────
+        function toggleCard(id) {
+            const card = document.getElementById('cx-' + id);
+            if (!card) return;
+            const isOpen = card.classList.contains('open');
+            document.querySelectorAll('.ex-card.open').forEach(c => c.classList.remove('open'));
+            if (!isOpen) card.classList.add('open');
+        }
+
+        // ── Set check ────────────────────────────────────────────────────────
+        async function checkSet(exId, si) {
+            const key = exId + '_' + si;
+            const wasDone = !!S.sets[key];
+            const willBeDone = !wasDone;
+            S.sets[key] = willBeDone;
+            S.totalSets = Math.max(0, (S.totalSets || 0) + (willBeDone ? 1 : -1));
+            saveLocal();
+
+            const chk = document.querySelector('[data-chk="' + key + '"]');
+            if (chk) chk.classList.toggle('ck', willBeDone);
+            const row = document.getElementById('sr-' + key);
+            if (row) row.classList.toggle('sdone', willBeDone);
+            const inp = document.querySelector('[data-inp="' + key + '"]');
+            if (inp) inp.disabled = willBeDone;
+
+            try {
+                const reps = S.reps[key] || 10;
+                await fetch(`${API_BASE}/api/sets/toggle`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ exerciseId: exId, setIndex: si, reps })
+                });
+            } catch (e) {
+                console.warn('Could not sync set check', e);
+            }
+        }
+
+        // ── Mark exercise complete ────────────────────────────────────────────
+        async function markDone(exId) {
+            const ex = todayExercises().find(e => e.id === exId);
+            if (!ex) return;
+            for (let i = 0; i < ex.sets; i++) {
+                const key = exId + '_' + i;
+                if (!S.sets[key]) {
+                    S.sets[key] = true;
+                    S.totalSets = (S.totalSets || 0) + 1;
+                }
+            }
+            S.done[exId] = true;
+            const histItem = {
+                name: ex.name,
+                sets: ex.sets,
+                reps: ex.reps,
+                date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+                custom: !!ex.custom
+            };
+            S.history = [histItem, ...(S.history || [])];
+            saveLocal();
+            renderExercises();
+            updateProg();
+
+            try {
+                await fetch(`${API_BASE}/api/exercises/complete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        exerciseId: ex.id,
+                        name: ex.name,
+                        sets: ex.sets,
+                        reps: ex.reps,
+                        isCustom: !!ex.custom
+                    })
+                });
+                setSyncStatus(true, 'Exercise Logged');
+            } catch (e) {
+                console.warn('Could not sync completed exercise', e);
+            }
+        }
+
+        // ── Remove custom from today ──────────────────────────────────────────
+        async function removeToday(id) {
+            S.todayCustoms = (S.todayCustoms || []).filter(x => x !== id);
+            delete S.done[id];
+            saveLocal();
+            renderExercises();
+            updateProg();
+
+            try {
+                await fetch(`${API_BASE}/api/today/custom/${id}`, { method: 'DELETE' });
+            } catch (e) {
+                console.warn('Could not sync remove custom', e);
+            }
+        }
+
+        // ── Delete from library ───────────────────────────────────────────────
+        async function deleteCustom(id) {
+            if (!confirm('Delete this exercise from your custom library?')) return;
+            S.customs = (S.customs || []).filter(e => e.id !== id);
+            S.todayCustoms = (S.todayCustoms || []).filter(x => x !== id);
+            delete S.done[id];
+            saveLocal();
+            renderLibrary();
+            renderExercises();
+            updateProg();
+
+            try {
+                await fetch(`${API_BASE}/api/custom-exercises/${id}`, { method: 'DELETE' });
+            } catch (e) {
+                console.warn('Could not sync delete custom', e);
+            }
+        }
+
+        // ── Add library exercise to today ─────────────────────────────────────
+        async function addToToday(id) {
+            if (!(S.todayCustoms || []).includes(id)) {
+                S.todayCustoms = [...(S.todayCustoms || []), id];
+                saveLocal();
+                renderExercises();
+                updateProg();
+
+                try {
+                    await fetch(`${API_BASE}/api/today/custom`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ exerciseId: id })
+                    });
+                } catch (e) {
+                    console.warn('Could not sync add to today', e);
+                }
+            }
+            goTo('today', document.querySelector('.nav-btn'));
+        }
+
+        // ── Save notes ────────────────────────────────────────────────────────
+        async function saveNote(exId, val) {
+            S.notes[exId] = val;
+            saveLocal();
+            try {
+                await fetch(`${API_BASE}/api/exercises/notes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ exerciseId: exId, notes: val })
+                });
+            } catch (e) {
+                console.warn('Could not sync note', e);
+            }
+        }
+
+        // ── Load video ────────────────────────────────────────────────────────
+        function loadVid(exId, vid) {
+            if (!vid) return;
+            const w = document.getElementById('vw-' + exId);
+            if (!w) return;
+            w.innerHTML = '<iframe src="https://www.youtube.com/embed/' + vid + '?autoplay=1&rel=0" allowfullscreen allow="autoplay"></iframe>';
+        }
+
+        // ── Toggle notes ──────────────────────────────────────────────────────
+        function toggleNotes(id) {
+            const el = document.getElementById('nt-' + id);
+            if (!el) return;
+            el.style.display = el.style.display === 'block' ? 'none' : 'block';
+            if (el.style.display === 'block') el.focus();
+        }
+
+        // ── Build set HTML ────────────────────────────────────────────────────
+        function buildSets(ex) {
+            let h = '';
+            for (let i = 0; i < ex.sets; i++) {
+                const key = ex.id + '_' + i;
+                const done = !!S.sets[key];
+                const reps = S.reps[key] !== undefined ? S.reps[key] : ex.reps;
+                h += `<div class="set-row${done ? ' sdone' : ''}" id="sr-${key}">
+      <div class="set-lbl">SET ${i + 1}</div>
+      <div class="set-inputs">
+        <input type="number" class="set-inp" data-inp="${key}" value="${reps}" min="1" max="999"
+          ${done ? 'disabled' : ''}
+          onchange="S.reps['${key}']=parseInt(this.value)||1;saveLocal()">
+        <span class="set-sep">reps</span>
+        <div class="set-chk${done ? ' ck' : ''}" data-chk="${key}" onclick="checkSet('${ex.id}',${i})" role="button" tabindex="0" aria-label="Mark set done">
+          <i class="ti ti-check" aria-hidden="true"></i>
+        </div>
+      </div>
+    </div>`;
+            }
+            return h;
+        }
+
+        // ── Render exercises ──────────────────────────────────────────────────
+        function renderExercises() {
+            const con = document.getElementById('ex-container');
+            if (todayPlan && todayPlan.rest) {
+                con.innerHTML = `<div class="rest-screen">
+      <div class="rest-icon">😴</div>
+      <div class="rest-title">REST DAY</div>
+      <div class="rest-msg">Recovery is where the gains happen.<br>Stay hydrated, sleep 8 hours, enjoy the rest.</div>
+    </div>`;
+                document.getElementById('prog-lbl').textContent = 'Rest day';
+                document.getElementById('prog-fill').style.width = '0%';
+                return;
+            }
+            const exs = todayExercises();
+            con.innerHTML = exs.map(ex => {
+                const done = !!S.done[ex.id];
+                const isCustom = !!ex.custom;
+                const hasVid = !!ex.vid;
+                return `<div class="ex-card${done ? ' done' : ''}" id="cx-${ex.id}">
+      <div class="ex-header" onclick="toggleCard('${ex.id}')" role="button" tabindex="0" aria-expanded="false">
+        <div class="ex-thumb">
+          <span>${ex.emoji || '🏋️'}</span>
+          <div class="thumb-overlay"><i class="ti ti-player-play" aria-hidden="true"></i></div>
+        </div>
+        <div class="ex-info">
+          <div class="ex-name">${ex.name}</div>
+          <div class="ex-meta"><b>${ex.sets}</b> sets &nbsp;·&nbsp; <b>${ex.reps}</b> reps</div>
+        </div>
+        <div class="badges">
+          ${isCustom ? '<span class="badge-custom">CUSTOM</span>' : ''}
+          ${done ? '<span class="badge-done">✓ Done</span>' : ''}
+        </div>
+        <i class="ti ti-chevron-down chevron" aria-hidden="true"></i>
+      </div>
+      <div class="ex-body">
+        <div class="muscle-row">${(ex.muscle || []).map(m => `<span class="mtag">${m}</span>`).join('')}</div>
+        ${hasVid
+                        ? `<div class="video-wrap" id="vw-${ex.id}" onclick="loadVid('${ex.id}','${ex.vid}')" role="button" aria-label="Play video demo">
+               <div class="vplay"><i class="ti ti-player-play" aria-hidden="true"></i></div>
+               <div class="vlabel">Tap to load demo video</div>
+             </div>`
+                        : `<div class="no-video"><i class="ti ti-video-off" aria-hidden="true"></i>No video for this exercise</div>`
+                    }
+        ${ex.tip ? `<div class="tip">${ex.tip}</div>` : ''}
+        <div class="sets-grid">${buildSets(ex)}</div>
+        <div class="card-actions">
+          <button class="btn-done" onclick="markDone('${ex.id}')" ${done ? 'disabled' : ''}>
+            ${done ? '✓ Completed' : 'Mark as Complete'}
+          </button>
+          <button class="btn-ico" onclick="toggleNotes('${ex.id}')" aria-label="Notes">
+            <i class="ti ti-notes" aria-hidden="true"></i>
+          </button>
+          ${isCustom ? `<button class="btn-ico red" onclick="removeToday('${ex.id}')" aria-label="Remove from today">
+            <i class="ti ti-trash" aria-hidden="true"></i>
+          </button>` : ''}
+        </div>
+        <textarea class="notes-ta" id="nt-${ex.id}" placeholder="Notes — weight used, how it felt..."
+          style="display:none"
+          onchange="saveNote('${ex.id}', this.value)">${S.notes[ex.id] || ''}</textarea>
+      </div>
+    </div>`;
+            }).join('');
+        }
+
+        // ── Render history / progress ─────────────────────────────────────────
+        async function renderHistory() {
+            let stats = {
+                totalDone: Object.keys(S.done).filter(k => S.done[k]).length,
+                streak: Math.min((S.day || 0) + 1, 7),
+                totalSets: S.totalSets || 0,
+                customCount: (S.customs || []).length
+            };
+
+            try {
+                const res = await fetch(`${API_BASE}/api/stats`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && data.stats) {
+                        stats = data.stats;
+                    }
+                }
+            } catch (e) {
+                console.warn('Could not fetch server stats', e);
+            }
+
+            document.getElementById('st-total').textContent = stats.totalDone;
+            document.getElementById('st-streak').textContent = stats.streak;
+            document.getElementById('st-sets').textContent = stats.totalSets;
+            document.getElementById('st-custom').textContent = stats.customCount;
+
+            const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+            const todayDow = (new Date().getDay() + 6) % 7;
+            document.getElementById('streak-row').innerHTML = days.map((d, i) => {
+                const cls = i < todayDow ? 'hit' : i === todayDow ? 'now' : 'off';
+                return `<div class="s-day ${cls}">${d}</div>`;
+            }).join('');
+
+            let hist = S.history || [];
+            try {
+                const hRes = await fetch(`${API_BASE}/api/history`);
+                if (hRes.ok) {
+                    const hData = await hRes.json();
+                    if (hData.success && hData.history) {
+                        hist = hData.history;
+                        S.history = hist;
+                        saveLocal();
+                    }
+                }
+            } catch (e) {
+                console.warn('Could not fetch server history', e);
+            }
+
+            const hl = document.getElementById('hist-list');
+            if (!hist.length) {
+                hl.innerHTML = '<div class="empty"><i class="ti ti-clipboard-list" aria-hidden="true"></i>No activity yet.<br>Complete today\'s exercises to start tracking.</div>';
+                return;
+            }
+            hl.innerHTML = hist.slice(0, 15).map(h =>
+                `<div class="hist-item">
+      <div class="hist-date">${h.date}${h.custom ? ' &nbsp;·&nbsp; <span style="color:var(--amber-text)">CUSTOM</span>' : ''}</div>
+      <div class="hist-name">${h.name}</div>
+      <div class="hist-meta">${h.sets} sets · ${h.reps} reps</div>
+    </div>`
+            ).join('');
+        }
+
+        // ── Render schedule ───────────────────────────────────────────────────
+        async function renderSchedule() {
+            let schedList = PROGRAM;
+            const currentDayIdx = (S.day || 0) % 7;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/program/schedule`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && data.schedule) {
+                        schedList = data.schedule;
+                    }
+                }
+            } catch (e) {
+                console.warn('Using local schedule list', e);
+            }
+
+            document.getElementById('sched-list').innerHTML = schedList.map((d, i) => {
+                const isToday = i === currentDayIdx;
+                const isPast = i < currentDayIdx;
+                return `<div class="sched-item${isToday ? ' today' : ''}" onclick="selectScheduleDay(${i})">
+      <div>
+        <div class="sched-day-n">DAY ${i + 1}</div>
+        <div class="sched-name" style="color:${isToday ? 'var(--accent)' : isPast ? 'var(--text3)' : 'var(--text)'}">${d.name}</div>
+        ${d.exercises && d.exercises.length ? `<div class="sched-count">${d.exercises.length} exercises</div>` : (d.exerciseCount !== undefined ? `<div class="sched-count">${d.exerciseCount} exercises</div>` : '')}
+      </div>
+      ${isToday ? '<span class="today-pill">TODAY</span>' : ''}
+      ${isPast && !isToday ? '<i class="ti ti-check-circle" style="color:var(--green-border);font-size:18px" aria-hidden="true"></i>' : ''}
+    </div>`;
+            }).join('');
+        }
+
+        function selectScheduleDay(idx) {
+            S.day = idx;
+            todayPlan = PROGRAM[idx % 7];
+            saveLocal();
+            renderHeader();
+            renderExercises();
+            updateProg();
+            goTo('today', document.querySelector('.nav-btn'));
+
+            fetch(`${API_BASE}/api/state/day`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ day: idx })
+            }).catch(() => {});
+        }
+
+        // ── Render library ────────────────────────────────────────────────────
+        async function renderLibrary() {
+            let customs = S.customs || [];
+            try {
+                const res = await fetch(`${API_BASE}/api/custom-exercises`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && data.customs) {
+                        customs = data.customs;
+                        S.customs = customs;
+                        saveLocal();
+                    }
+                }
+            } catch (e) {
+                console.warn('Could not fetch custom exercises', e);
+            }
+
+            const hl = document.getElementById('lib-list');
+            if (!customs.length) {
+                hl.innerHTML = '<div class="empty"><i class="ti ti-dumbbell" aria-hidden="true"></i>No custom exercises yet.<br>Tap "Create new exercise" to add one.</div>';
+                return;
+            }
+            hl.innerHTML = customs.map(ex => {
+                const inToday = (S.todayCustoms || []).includes(ex.id);
+                return `<div class="lib-item">
+      <div class="lib-emoji">${ex.emoji || '🏋️'}</div>
+      <div class="lib-info">
+        <div class="lib-name">${ex.name}</div>
+        <div class="lib-meta">${ex.sets} sets · ${ex.reps} reps${ex.muscle && ex.muscle.length ? ' · ' + ex.muscle.slice(0, 2).join(', ') : ''}</div>
+      </div>
+      <div class="lib-actions">
+        <button class="lib-btn" onclick="addToToday('${ex.id}')" ${inToday ? 'disabled' : ''} aria-label="${inToday ? 'Already in today' : 'Add to today'}">
+          <i class="ti ti-${inToday ? 'check' : 'bolt'}" aria-hidden="true"></i>
+        </button>
+        <button class="lib-btn red" onclick="deleteCustom('${ex.id}')" aria-label="Delete">
+          <i class="ti ti-trash" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>`;
+            }).join('');
+        }
+
+        // ── Modal ─────────────────────────────────────────────────────────────
+        let selEmoji = '🏋️';
+        let selMuscles = [];
+
+        function openModal() {
+            selEmoji = '🏋️';
+            selMuscles = [];
+            document.getElementById('f-name').value = '';
+            document.getElementById('f-name').classList.remove('err');
+            document.getElementById('f-sets').value = 3;
+            document.getElementById('f-reps').value = 12;
+            document.getElementById('f-vid').value = '';
+            document.getElementById('f-tip').value = '';
+            document.getElementById('f-today').value = 'yes';
+            buildEmojiGrid();
+            buildMuscleChips();
+            document.getElementById('modal-wrap').style.display = 'block';
+            setTimeout(() => document.getElementById('f-name').focus(), 50);
+            window.scrollTo(0, 0);
+        }
+
+        function closeModal() { document.getElementById('modal-wrap').style.display = 'none'; }
+
+        function buildEmojiGrid() {
+            document.getElementById('emoji-grid').innerHTML = EMOJIS.map(e =>
+                `<div class="e-opt${e === selEmoji ? ' sel' : ''}" onclick="pickEmoji('${e}')" role="button" aria-label="${e}">${e}</div>`
+            ).join('');
+        }
+
+        function pickEmoji(e) { selEmoji = e; buildEmojiGrid(); }
+
+        function buildMuscleChips() {
+            document.getElementById('muscle-chips').innerHTML = MUSCLE_OPTS.map(m =>
+                `<div class="m-chip${selMuscles.includes(m) ? ' sel' : ''}" onclick="toggleMuscle('${m}')" role="button">${m}</div>`
+            ).join('');
+        }
+
+        function toggleMuscle(m) {
+            selMuscles = selMuscles.includes(m) ? selMuscles.filter(x => x !== m) : [...selMuscles, m];
+            buildMuscleChips();
+        }
+
+        async function saveCustom() {
+            const name = document.getElementById('f-name').value.trim();
+            if (!name) {
+                document.getElementById('f-name').classList.add('err');
+                document.getElementById('f-name').focus();
+                return;
+            }
+            document.getElementById('f-name').classList.remove('err');
+            const sets = parseInt(document.getElementById('f-sets').value) || 3;
+            const reps = parseInt(document.getElementById('f-reps').value) || 12;
+            const vid = document.getElementById('f-vid').value.trim();
+            const tip = document.getElementById('f-tip').value.trim();
+            const addNow = document.getElementById('f-today').value === 'yes';
+
+            const newExPayload = {
+                name,
+                sets,
+                reps,
+                emoji: selEmoji,
+                muscle: selMuscles.length ? selMuscles : ['Custom'],
+                vid: vid || null,
+                tip: tip || null,
+                addToToday: addNow
+            };
+
+            // Local fallback creation
+            const fallbackId = 'c' + Date.now();
+            const localEx = { id: fallbackId, ...newExPayload, custom: true };
+            S.customs = [...(S.customs || []), localEx];
+            if (addNow) S.todayCustoms = [...(S.todayCustoms || []), fallbackId];
+            saveLocal();
+            closeModal();
+            renderExercises();
+            updateProg();
+            renderLibrary();
+
+            // Sync to backend API
+            try {
+                const res = await fetch(`${API_BASE}/api/custom-exercises`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newExPayload)
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && data.exercise) {
+                        // Replace fallback id with real backend id
+                        const serverEx = data.exercise;
+                        S.customs = S.customs.map(e => e.id === fallbackId ? serverEx : e);
+                        if (addNow) {
+                            S.todayCustoms = S.todayCustoms.map(id => id === fallbackId ? serverEx.id : id);
+                        }
+                        saveLocal();
+                        renderExercises();
+                        renderLibrary();
+                        setSyncStatus(true, 'Saved');
+                    }
+                }
+            } catch (e) {
+                console.warn('Could not sync custom exercise to server', e);
+            }
+        }
+
+        // ── Init ──────────────────────────────────────────────────────────────
+        renderHeader();
+        fetchInitialData();
+    </script>
+</body>
+
+</html>
